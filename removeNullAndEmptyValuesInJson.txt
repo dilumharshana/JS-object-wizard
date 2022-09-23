@@ -1,0 +1,92 @@
+/**
+ *
+ * @param Object that you want to remove all the null values with their keys
+ * @returns null values removed object
+ */
+
+export const removeNullValues = (targetEntity: any) => {
+  /**
+   * Handle object arrays
+   * example : [ {} , {} ]
+   */
+  if (Array.isArray(targetEntity)) {
+    return handleArrays(targetEntity);
+  }
+
+  /**
+   * Handle Objects
+   * example : {}
+   */
+  if (typeof targetEntity === "object") {
+    return handleObjects(targetEntity);
+  }
+};
+
+const handleObjects = (targetObject: any) => {
+  const newObject: any = {};
+
+  /**
+   * Number of keys to iterate
+   */
+  const keys = Object.keys(targetObject);
+
+  keys.forEach((key) => {
+    /**
+     * If current key contains an array
+     */
+    if (Array.isArray(targetObject?.[key])) {
+      const preparedArray = handleArrays(targetObject?.[key]);
+      if (preparedArray.length > 0) {
+        newObject[key] = preparedArray;
+      }
+      return;
+    }
+
+    /**
+     * If current key contains a object
+     */
+    if (typeof targetObject?.[key] === "object") {
+      if (targetObject?.[key] !== null) {
+        const preparedObject = handleObjects(targetObject?.[key]);
+        newObject[key] = preparedObject;
+      }
+    }
+
+    /**
+     * If current key contains a scalar value ( pure key value pair)
+     */
+    if (
+      typeof targetObject?.[key] !== "object" &&
+      !Array.isArray(targetObject?.[key])
+    ) {
+      if (targetObject?.[key] !== null && targetObject?.[key] !== "") {
+        newObject[key] = targetObject?.[key];
+      }
+    }
+  });
+
+  return newObject;
+};
+
+const handleArrays = (targetArray: any) => {
+  return targetArray
+    .map((filteredItem: any) => {
+      /**
+       * Remove null values inside objects in array
+       */
+      if (typeof filteredItem === "object") {
+        if (filteredItem !== null) {
+          const preparedObject = handleObjects(filteredItem);
+          return Object.keys(preparedObject).length > 0 ? preparedObject : null;
+        }
+      }
+
+      return filteredItem;
+    })
+    .filter((item: any) => {
+      /**
+       * Remove pure null values
+       */
+      if (item != null) return item;
+    });
+};
